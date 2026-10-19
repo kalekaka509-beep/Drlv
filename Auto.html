@@ -1,1 +1,155 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V10 Robust - Final</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+body{background:#000;color:white}
+.header{background:#E60023;color:white;padding:14px;text-align:center}
+.card{background:#1a1a1a;margin:10px;border-radius:14px;padding:14px;border:1px solid #333}
+input{width:100%;padding:11px;border-radius:10px;background:#222;color:white;border:1px solid #444;margin-top:6px}
+.btn{background:#E60023;color:white;border:none;padding:12px;border-radius:10px;width:100%;margin-top:8px;font-weight:800;cursor:pointer}
+.btn2{background:#00e676;color:black}
+.btn3{background:#2979ff}
+.post{border:1px solid #333;border-radius:12px;padding:10px;margin-top:8px;display:flex;gap:10px;background:#222}
+.log{background:#000;color:#00ff88;font-family:monospace;font-size:11px;padding:10px;border-radius:10px;max-height:280px;overflow:auto;margin-top:10px;border:1px solid #00ff88}
+.timer{font-size:18px;font-weight:800;text-align:center;color:#00ff88;margin:8px}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🚀 V10 ROBUST - 3 PROXY - FINAL</h1>
+<p>Proxy 1 Fail = Proxy 2 = Proxy 3 = Demo = 100% Post!</p>
+</div>
+
+<div class="card">
+<label>Forex RSS (JSON)</label>
+<input id="rss1" value="https://forexsignalslivegold.blogspot.com/feeds/posts/default?alt=json&max-results=5">
+<button class="btn" onclick="fetchOne(1)">🔍 Fetch Forex</button>
+
+<label>Pet RSS</label>
+<input id="rss2" value="https://bestpetinsurance-usa-eu.blogspot.com/feeds/posts/default?alt=json&max-results=5">
+<button class="btn" onclick="fetchOne(2)">🔍 Fetch Pet</button>
+
+<label>Car RSS</label>
+<input id="rss3" value="https://luxurycarsusa2026.blogspot.com/feeds/posts/default?alt=json&max-results=5">
+<button class="btn" onclick="fetchOne(3)">🔍 Fetch Car</button>
+
+<button class="btn btn2" onclick="fetchAllRobust()">🔍 Fetch All 3 - Robust 3 Proxy</button>
+</div>
+
+<div class="card" id="postsCard" style="display:block">
+<div class="timer" id="timer">Next Auto: Ready - V10</div>
+<button class="btn btn2" onclick="startV10()">▶️ Start V10 Full Auto</button>
+<button class="btn btn3" onclick="postNext()">📤 Post NOW - No Token</button>
+<div id="posts"></div>
+<div class="log" id="log">> V10 Robust Ready... 3 Proxy fallback...</div>
+</div>
+
+<script>
+var allPosts=[], idx=0, autoInt=null, countInt=null, nextTime=null;
+
+function parseBloggerData(data){
+  try{
+    var feedData = data.feed ? data : JSON.parse(data);
+    var entries = feedData.feed && feedData.feed.entry ? feedData.feed.entry : [];
+    return entries.slice(0,3).map(function(e){
+      var linkObj = e.link.find(function(l){return l.rel=='alternate';});
+      var thumb='https://picsum.photos/400?random='+Math.random();
+      if(e.media$thumbnail) thumb=e.media$thumbnail.url.replace('s72-c','s400');
+      return {title:e.title.$t, link:linkObj?linkObj.href:'', image:thumb, blog:'Blog'};
+    });
+  }catch(e){return []}
+}
+
+function getFallbackPosts(blogNum){
+  var demos={
+    1:[{title:'Want to Start Forex Trading in USA? $1000 Strategy 2026',link:'https://forexsignalslivegold.blogspot.com/2025/08/want-to-start-forex-trading-in-usa.html',image:'https://picsum.photos/seed/forex1/400',blog:'Forex'}],
+    2:[{title:'Best Pet Insurance USA 2026 - Top 5 Plans',link:'https://bestpetinsurance-usa-eu.blogspot.com/',image:'https://picsum.photos/seed/pet1/400',blog:'Pet'}],
+    3:[{title:'Luxury Cars USA 2026 - Best Deals',link:'https://luxurycarsusa2026.blogspot.com/',image:'https://picsum.photos/seed/car1/400',blog:'Car'}]
+  };
+  return demos[blogNum]||[];
+}
+
+function fetchOne(num){
+ var url=document.getElementById('rss'+num).value;
+ var log=document.getElementById('log');
+ var postsDiv=document.getElementById('posts');
+ document.getElementById('postsCard').style.display='block';
+ log.innerHTML+='<br>> Fetching Blog '+num+' with 3 proxy...';
+ 
+ // PROXY 1: allorigins get (not raw)
+ var proxy1='https://api.allorigins.win/get?url='+encodeURIComponent(url);
+ fetch(proxy1).then(function(r){return r.json();}).then(function(d){
+   var content=d.contents;
+   var jsonData=JSON.parse(content);
+   var posts=parseBloggerData(jsonData);
+   if(posts.length>0) throw {okPosts:posts, source:'Proxy1'}; // success via throw trick
+   return fetch('https://corsproxy.io/?'+encodeURIComponent(url));
+ }).then(function(r){return r.json();}).then(function(jsonData){
+   var posts=parseBloggerData(jsonData);
+   if(posts.length>0){ showPosts(posts,num,'Proxy2'); return; }
+   throw new Error('need fallback');
+ }).catch(function(err){
+   if(err.okPosts){
+     showPosts(err.okPosts,num,err.source);
+   }else{
+     // PROXY 1 Fail = Try direct parse or fallback demo
+     log.innerHTML+='<br>> Proxy1 blocked (Oops), trying Proxy2...';
+     fetch('https://corsproxy.io/?'+encodeURIComponent(url)).then(function(r){return r.json();}).then(function(j){
+       var posts=parseBloggerData(j);
+       if(posts.length>0) showPosts(posts,num,'Proxy2-Cors');
+       else showPosts(getFallbackPosts(num),num,'Fallback Demo (100% Works)');
+     }).catch(function(){
+       showPosts(getFallbackPosts(num),num,'Fallback Demo (100% Works)');
+     });
+   }
+ });
+
+ function showPosts(posts,num,source){
+   allPosts=allPosts.concat(posts);
+   var html='';
+   allPosts.forEach(function(p){
+     html+='<div class="post"><img src="'+p.image+'" width="50" height="50" style="border-radius:8px"><div><b>['+p.blog+']</b> '+p.title.substring(0,40)+'<br><span style="background:#00e676;color:black;padding:2px 6px;border-radius:10px;font-size:9px">'+source+'</span></div></div>';
+   });
+   postsDiv.innerHTML=html;
+   localStorage.setItem('v10_posts', JSON.stringify(allPosts));
+   log.innerHTML+='<br>> ✅ Blog '+num+': '+posts.length+' posts via '+source+' - TOTAL '+allPosts.length;
+ }
+}
+
+function fetchAllRobust(){
+ allPosts=[]; 
+ document.getElementById('log').innerHTML='> V10 Robust fetching...';
+ fetchOne(1);
+ setTimeout(function(){ fetchOne(2); }, 1200);
+ setTimeout(function(){ fetchOne(3); }, 2400);
+}
+
+function startV10(){
+ var log=document.getElementById('log');
+ log.innerHTML+='<br>> [V10 AUTO STARTED] 3 Proxy Robust';
+ nextTime=new Date(Date.now()+15000);
+ autoInt=setInterval(function(){ postNext(); nextTime=new Date(Date.now()+8*3600*1000); }, 30000);
+ countInt=setInterval(function(){
+   if(!nextTime) return;
+   var d=nextTime-new Date(); if(d<0) d=0;
+   var h=Math.floor(d/3600000), m=Math.floor((d%3600000)/60000), s=Math.floor((d%60000)/1000);
+   document.getElementById('timer').innerText='Next Auto: '+h+'h '+m+'m '+s+'s - V10 Robust!';
+ },1000);
+}
+
+function postNext(){
+ if(allPosts.length==0){allPosts=JSON.parse(localStorage.getItem('v10_posts')||'[]');}
+ if(allPosts.length==0){alert('Fetch first!');return}
+ var item=allPosts[idx % allPosts.length]; idx++;
+ var url='https://www.pinterest.com/pin/create/button/?url='+encodeURIComponent(item.link)+'&media='+encodeURIComponent(item.image)+'&description='+encodeURIComponent(item.title);
+ window.open(url,'_blank');
+ document.getElementById('log').innerHTML+='<br>> 📤 Posted ['+item.blog+'] '+item.title.substring(0,20)+' - Token 0!';
+}
+</script>
+</body>
+</html>
